@@ -1,26 +1,30 @@
 package controller;
 
 import java.io.File;
-import java.nio.channels.SelectionKey;
 import java.util.List;
 
 import AudioWorker.AudioWorker;
+import domain.Song;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 
 public class Controller {
 
-    private List<File> musicList;
+    private List<Song> songList;
     private final AudioWorker audioWorker = new AudioWorker();
     private MediaPlayer mediaPlayer;
     private Media media;
@@ -30,9 +34,18 @@ public class Controller {
     private String songNames;
     private ImageView pause;
     private ImageView play;
+    private ObservableList<Song> list;
+    private Song nowPlaying;
+    private Duration duration;
 
     @FXML
     private Text songName;
+
+    @FXML
+    private Slider volumeSlider;
+
+    @FXML
+    private Slider mediaSlider;
 
     @FXML
     private Button nameDirWithAudio;
@@ -50,14 +63,14 @@ public class Controller {
     private ListView<File> listView;
 
     @FXML
+    private TableView<Song> titleSongTable;
+
+    @FXML
+    private TableColumn<Song, String> titleColumn;
+
+    @FXML
     void initialize() {
-
-        //musicList = audioWorker.loadAudioFiles(dirWithMusic);
-        //media = new Media(musicList.get(index).toURI().toString());
-        //mediaPlayer = new MediaPlayer(media);
         try {
-
-
             pause = new ImageView(new Image("/icons/pause.jpg"));
             play = new ImageView(new Image("/icons/play.jpg"));
             pause.setFitWidth(110);
@@ -65,17 +78,51 @@ public class Controller {
             play.setFitWidth(110);
             play.setFitHeight(110);
 
+            volumeSlider.setMin(0);
+            volumeSlider.setMax(1);
+            volumeSlider.setValue(0.3);
 
-            listView.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            mediaSlider.setMin(0);
+            mediaSlider.setMax(1);
+            mediaSlider.setValue(0.3);
 
+            volumeSlider.valueProperty().addListener(new ChangeListener<Number>() {
                 @Override
-                public void handle(MouseEvent event) {
-                    songName.setText(listView.getSelectionModel().getSelectedItem().getName());
-                    play();
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    mediaPlayer.setVolume(volumeSlider.getValue());
                 }
             });
-            playPauseButton.setOnAction(event -> {
 
+            mediaSlider.valueProperty().addListener(new ChangeListener<Number>() {
+                @Override
+                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                    //mediaPlayer.seek(duration.multiply(mediaSlider.getValue()));
+                    mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
+                    System.out.println(mediaSlider.getValue());
+                }
+            });
+
+
+
+
+
+            mediaSlider.valueChangingProperty().addListener((obs, wasChanging, isChanging) -> {
+                if (! isChanging) {
+                    mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
+                }
+            });
+
+
+            titleSongTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    nowPlaying = titleSongTable.getSelectionModel().getSelectedItem();
+                    songName.setText(nowPlaying.getName());
+                    play(nowPlaying);
+                }
+            });
+
+            playPauseButton.setOnAction(event -> {
                 if (isMusicPlay) {
                     mediaPlayer.pause();
                     isMusicPlay = false;
@@ -94,17 +141,20 @@ public class Controller {
                     mediaPlayer.stop();
                     isMusicPlay = false;
                 }
-
-                index++;
                 try {
-                    media = new Media(musicList.get(index).toURI().toString());
+                    //media = new Media(list.get(index).getSongFile().toURI().toString());
+
+                    nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
+                    play(nowPlaying);
+                    songName.setText(nowPlaying.getName());
+                    //media = new Media(list.get(index).getSongFile().toURI().toString());
                 } catch (ArrayIndexOutOfBoundsException e) {
                     return;
                 }
-                mediaPlayer = new MediaPlayer(media);
-                mediaPlayer.play();
-                isMusicPlay = true;
-                playPauseButton.setGraphic(pause);
+                //mediaPlayer = new MediaPlayer(media);
+                //mediaPlayer.play();
+                //isMusicPlay = true;
+                //playPauseButton.setGraphic(pause);
             });
 
             previousButton.setOnAction(event -> {
@@ -112,52 +162,43 @@ public class Controller {
                     mediaPlayer.stop();
                     isMusicPlay = false;
                 }
-
-                index--;
                 try {
-                    media = new Media(musicList.get(index).toURI().toString());
+                    nowPlaying = list.get(list.indexOf(nowPlaying) - 1);
+                    play(nowPlaying);
+                    songName.setText(nowPlaying.getName());
                 } catch (ArrayIndexOutOfBoundsException e) {
                     return;
                 }
-                mediaPlayer = new MediaPlayer(media);
-                mediaPlayer.play();
-                isMusicPlay = true;
-                playPauseButton.setGraphic(pause);
             });
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     public void setDirWithMusic(File dirWithMusic) {
         this.dirWithMusic = dirWithMusic;
-        musicList = audioWorker.loadAudioFiles(dirWithMusic);
-        //musicList.get(0).getName().replace(musicList.get(0).getName().length()-4, musicList.get(0).getName().length()-1);
-        //StringBuffer stringBuffer = new StringBuffer(musicList.get(0).getName());
-        //stringBuffer.delete(musicList.get(0).getName().length()-4, musicList.get(0).getName().length()-1);
-        //System.out.println(stringBuffer.delete(musicList.get(0).getName().length()-4, musicList.get(0).getName().length()-1));
-        //musicList.stream().map(x -> new StringBuffer(x.getName()).delete(x.getName().length()-4, x.getName().length()-1))
-          //      .forEach(listView.getItems().addAll());
-        listView.getItems().addAll(musicList);
-        listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        ObservableList list = listView.getSelectionModel().getSelectedItems();
-        System.out.println(list.get(0));
-        for (Object item: list) {
-            songName.setText((String) item);
-        }
+        songList = audioWorker.loadAudioFiles(dirWithMusic);
 
-        media = new Media(musicList.get(index).toURI().toString());
+        list = FXCollections.observableArrayList(songList);
+        titleSongTable.setItems(list);
+        titleColumn.setCellValueFactory(cellData -> cellData.getValue().getStringPropertyName());
+
+        media = new Media(list.get(index).getSongFile().toURI().toString());
         mediaPlayer = new MediaPlayer(media);
     }
 
-    private void play(){
-        if (isMusicPlay) {
-            mediaPlayer.pause();
+    private void play(Song song){
+
+        mediaPlayer.setVolume(0.3);
+        if (isMusicPlay = true) {
+            mediaPlayer.stop();
             isMusicPlay = false;
-            playPauseButton.setGraphic(play);
-            return;
         }
+
+
+        duration = mediaPlayer.getCurrentTime();
+        System.out.println(duration);
+        media = new Media(song.getSongFile().toURI().toString());
+        mediaPlayer = new MediaPlayer(media);
 
         mediaPlayer.play();
         isMusicPlay = true;
