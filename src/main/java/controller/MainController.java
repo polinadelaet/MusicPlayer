@@ -29,7 +29,6 @@ public class MainController {
 
             try {
                 URL url = new File("src/main/java/screenWithMusic.fxml").toURI().toURL();
-                //Parent root = FXMLLoader.load(url);
 
                 FXMLLoader loader = new FXMLLoader(url);
                 Parent root = loader.load();
@@ -37,7 +36,9 @@ public class MainController {
                 controller.setDirWithMusic(dirWithMusic);
 
                 Stage stage1 = new Stage();
-                stage1.setScene(new Scene(root, 1400, 1000));
+                stage1.setScene(new Scene(root));
+                stage1.setMinHeight(1000);
+                stage1.setMinWidth(700);
                 stage1.show();
             } catch (Exception e) {
                 e.printStackTrace();

@@ -7,6 +7,7 @@ import AudioWorker.AudioWorker;
 import domain.Song;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -16,6 +17,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -37,6 +39,7 @@ public class Controller {
     private ObservableList<Song> list;
     private Song nowPlaying;
     private Duration duration;
+    private static double MIN_CHANGE = 0.5;
 
     @FXML
     private Text songName;
@@ -58,6 +61,12 @@ public class Controller {
 
     @FXML
     private Button nextButton;
+
+    @FXML
+    private Text timeNowLabel;
+
+    @FXML
+    private Text timeLabel;
 
     @FXML
     private ListView<File> listView;
@@ -82,9 +91,7 @@ public class Controller {
             volumeSlider.setMax(1);
             volumeSlider.setValue(0.3);
 
-            mediaSlider.setMin(0);
-            mediaSlider.setMax(1);
-            mediaSlider.setValue(0.3);
+            //mediaSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
 
             volumeSlider.valueProperty().addListener(new ChangeListener<Number>() {
                 @Override
@@ -93,25 +100,20 @@ public class Controller {
                 }
             });
 
-            mediaSlider.valueProperty().addListener(new ChangeListener<Number>() {
-                @Override
-                public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                    //mediaPlayer.seek(duration.multiply(mediaSlider.getValue()));
-                    mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
-                    System.out.println(mediaSlider.getValue());
-                }
-            });
 
+           mediaSlider.setOnMouseClicked(new EventHandler<MouseEvent>() {
+               @Override
+               public void handle(MouseEvent event) {
+                   mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
+               }
+           });
 
-
-
-
-            mediaSlider.valueChangingProperty().addListener((obs, wasChanging, isChanging) -> {
-                if (! isChanging) {
-                    mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
-                }
-            });
-
+           mediaSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
+               @Override
+               public void handle(MouseEvent event) {
+                   mediaPlayer.seek(Duration.seconds(mediaSlider.getValue()));
+               }
+           });
 
             titleSongTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
@@ -121,6 +123,7 @@ public class Controller {
                     play(nowPlaying);
                 }
             });
+
 
             playPauseButton.setOnAction(event -> {
                 if (isMusicPlay) {
@@ -141,20 +144,11 @@ public class Controller {
                     mediaPlayer.stop();
                     isMusicPlay = false;
                 }
-                try {
-                    //media = new Media(list.get(index).getSongFile().toURI().toString());
 
-                    nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
-                    play(nowPlaying);
-                    songName.setText(nowPlaying.getName());
-                    //media = new Media(list.get(index).getSongFile().toURI().toString());
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    return;
-                }
-                //mediaPlayer = new MediaPlayer(media);
-                //mediaPlayer.play();
-                //isMusicPlay = true;
-                //playPauseButton.setGraphic(pause);
+                nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
+                play(nowPlaying);
+                songName.setText(nowPlaying.getName());
+
             });
 
             previousButton.setOnAction(event -> {
@@ -188,20 +182,40 @@ public class Controller {
 
     private void play(Song song){
 
-        mediaPlayer.setVolume(0.3);
         if (isMusicPlay = true) {
             mediaPlayer.stop();
             isMusicPlay = false;
         }
 
-
-        duration = mediaPlayer.getCurrentTime();
-        System.out.println(duration);
         media = new Media(song.getSongFile().toURI().toString());
         mediaPlayer = new MediaPlayer(media);
 
         mediaPlayer.play();
+        mediaPlayer.setVolume(0.3);
         isMusicPlay = true;
         playPauseButton.setGraphic(pause);
+
+        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
+                mediaSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
+                Duration time = new Duration(mediaPlayer.getTotalDuration().toMinutes());
+                timeLabel.setText(time.toMinutes()+"");
+                mediaSlider.setValue(newValue.toSeconds());
+                Duration timeNow = new Duration(newValue.toMinutes());
+                timeNowLabel.setText(timeNow +"");
+            }
+        });
+
+        mediaPlayer.setOnEndOfMedia(new Runnable() {
+            @Override
+            public void run() {
+                mediaPlayer.stop();
+                isMusicPlay = false;
+                nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
+                play(nowPlaying);
+                songName.setText(nowPlaying.getName());
+            }
+        });
     }
 }
