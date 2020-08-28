@@ -1,7 +1,12 @@
 package controller;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import AudioWorker.AudioWorker;
 import domain.Song;
@@ -14,6 +19,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -22,6 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class Controller {
@@ -76,6 +85,9 @@ public class Controller {
 
     @FXML
     private TableColumn<Song, String> titleColumn;
+
+    @FXML
+    private Button mainScreen;
 
     @FXML
     void initialize() {
@@ -151,6 +163,29 @@ public class Controller {
 
             });
 
+            mainScreen.setOnAction(event -> {
+                try {
+                    mainScreen.getScene().getWindow().hide();
+                    URL url = new File("src/main/java/mainScreen.fxml").toURI().toURL();
+                    FXMLLoader loader = new FXMLLoader(url);
+
+                    Parent root = loader.load();
+                    MainController controller = loader.getController();
+
+                    Stage stage1 = new Stage();
+                    stage1.setScene(new Scene(root));
+
+                    stage1.setTitle("Music Player | polinadelaet");
+
+                    //primaryStage.setScene(new Scene(root, 1400, 1000));
+                    stage1.setResizable(false);
+                    //primaryStage.setMinHeight(1000);
+                    //primaryStage.setMinWidth(1000);
+                    stage1.getIcons().add(new Image("picture.jpg"));
+                    stage1.show();
+                } catch (IOException e) {}
+            });
+
             previousButton.setOnAction(event -> {
                 if (isMusicPlay = true) {
                     mediaPlayer.stop();
@@ -164,6 +199,8 @@ public class Controller {
                     return;
                 }
             });
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -199,11 +236,33 @@ public class Controller {
             @Override
             public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
                 mediaSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
-                Duration time = new Duration(mediaPlayer.getTotalDuration().toMinutes());
-                timeLabel.setText(time.toMinutes()+"");
-                mediaSlider.setValue(newValue.toSeconds());
-                Duration timeNow = new Duration(newValue.toMinutes());
-                timeNowLabel.setText(timeNow +"");
+
+                Duration time = new Duration(mediaPlayer.getTotalDuration().toMillis());
+                Duration timeNow = new Duration(newValue.toMillis());
+
+                System.out.println(mediaSlider.getValue());
+                System.out.println("_______" + timeNow);
+
+                double secondsEndTime = time.toSeconds() % 60;
+                double minutesEndTime =  time.toSeconds() / 60;
+                timeLabel.setText(String.format("%.1s", minutesEndTime) + ":" + String.format("%.2s", secondsEndTime));
+                double secondsTimeNow = timeNow.toSeconds() % 60;
+                double minutesTimeNow =  timeNow.toSeconds() / 60;
+
+                if ((timeNow.toSeconds() % 60) < 10) {
+
+                    String s = "0" + (timeNow.toSeconds() % 60);
+                    timeNowLabel.setText(String.format("%.1s", minutesTimeNow) + ":" + String.format("%.2s", s));
+                } else {
+
+                    mediaSlider.setValue(newValue.toSeconds());
+
+                    System.out.println("sec = " + secondsEndTime);
+                    System.out.println("min = " + minutesEndTime);
+
+                    timeNowLabel.setText(String.format("%.1s", minutesTimeNow) + ":" + String.format("%.2s", secondsTimeNow));
+                    timeLabel.setText(String.format("%.1s", minutesEndTime) + ":" + String.format("%.2s", secondsEndTime));
+                }
             }
         });
 

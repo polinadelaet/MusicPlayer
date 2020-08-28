@@ -12,7 +12,7 @@ public final class Song {
 
     public Song(File file) {
         StringBuffer stringBuffer = new StringBuffer(file.getName()).delete(file.getName()
-                                                    .length()-4, file.getName().length()-1);
+                                                    .length()-4, file.getName().length());
         this.name = stringBuffer.toString();
         this.songFile = file;
     }

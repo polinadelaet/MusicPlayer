@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
@@ -37,21 +38,22 @@ public class MainController {
 
                 Stage stage1 = new Stage();
                 stage1.setScene(new Scene(root));
-                stage1.setMinHeight(1000);
-                stage1.setMinWidth(700);
+                stage1.setMinHeight(800);
+                stage1.setMaxHeight(1100);
+                stage1.setMinWidth(1000);
+                stage1.setMaxHeight(1400);
+                //stage1.setResizable(false);
+
+                stage1.getIcons().add(new Image("picture.jpg"));
                 stage1.show();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            /*Parent root = loader.getRoot();
-            Stage stage1 = new Stage();
-            stage1.setScene(new Scene(root));
-            stage1.showAndWait();
-             */
         });
     }
 
     public File getDirWithMusic() {
         return dirWithMusic;
     }
+
 }
