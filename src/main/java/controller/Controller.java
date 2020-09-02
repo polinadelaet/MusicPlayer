@@ -2,17 +2,10 @@ package controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import AudioWorker.AudioWorker;
 import domain.Song;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -25,7 +18,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -42,13 +34,11 @@ public class Controller {
     private boolean isMusicPlay = false;
     private int index = 0;
     private File dirWithMusic;
-    private String songNames;
     private ImageView pause;
     private ImageView play;
     private ObservableList<Song> list;
     private Song nowPlaying;
-    private Duration duration;
-    private static double MIN_CHANGE = 0.5;
+    private boolean flag;
 
     @FXML
     private Text songName;
@@ -58,9 +48,6 @@ public class Controller {
 
     @FXML
     private Slider mediaSlider;
-
-    @FXML
-    private Button nameDirWithAudio;
 
     @FXML
     private Button previousButton;
@@ -94,16 +81,14 @@ public class Controller {
         try {
             pause = new ImageView(new Image("/icons/pause.jpg"));
             play = new ImageView(new Image("/icons/play.jpg"));
-            pause.setFitWidth(110);
-            pause.setFitHeight(110);
-            play.setFitWidth(110);
-            play.setFitHeight(110);
-
+            pause.setFitWidth(100);
+            pause.setFitHeight(100);
+            play.setFitWidth(100);
+            play.setFitHeight(100);
             volumeSlider.setMin(0);
             volumeSlider.setMax(1);
             volumeSlider.setValue(0.3);
-
-            //mediaSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
+            flag = true;
 
             volumeSlider.valueProperty().addListener(new ChangeListener<Number>() {
                 @Override
@@ -111,7 +96,6 @@ public class Controller {
                     mediaPlayer.setVolume(volumeSlider.getValue());
                 }
             });
-
 
            mediaSlider.setOnMouseClicked(new EventHandler<MouseEvent>() {
                @Override
@@ -130,12 +114,13 @@ public class Controller {
             titleSongTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent event) {
+                    flag = false;
+                    mediaSlider.setValue(0);
                     nowPlaying = titleSongTable.getSelectionModel().getSelectedItem();
                     songName.setText(nowPlaying.getName());
                     play(nowPlaying);
                 }
             });
-
 
             playPauseButton.setOnAction(event -> {
                 if (isMusicPlay) {
@@ -144,89 +129,81 @@ public class Controller {
                     playPauseButton.setGraphic(play);
                     return;
                 }
-
+                if (flag) {return;}
                 mediaPlayer.play();
                 isMusicPlay = true;
                 playPauseButton.setGraphic(pause);
             });
 
             nextButton.setOnAction(event -> {
-
-                if (isMusicPlay = true) {
-                    mediaPlayer.stop();
-                    isMusicPlay = false;
-                }
-
-                nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
-                play(nowPlaying);
-                songName.setText(nowPlaying.getName());
-
-            });
-
-            mainScreen.setOnAction(event -> {
                 try {
-                    mainScreen.getScene().getWindow().hide();
-                    URL url = new File("src/main/java/mainScreen.fxml").toURI().toURL();
-                    FXMLLoader loader = new FXMLLoader(url);
-
-                    Parent root = loader.load();
-                    MainController controller = loader.getController();
-
-                    Stage stage1 = new Stage();
-                    stage1.setScene(new Scene(root));
-
-                    stage1.setTitle("Music Player | polinadelaet");
-
-                    //primaryStage.setScene(new Scene(root, 1400, 1000));
-                    stage1.setResizable(false);
-                    //primaryStage.setMinHeight(1000);
-                    //primaryStage.setMinWidth(1000);
-                    stage1.getIcons().add(new Image("picture.jpg"));
-                    stage1.show();
-                } catch (IOException e) {}
-            });
-
-            previousButton.setOnAction(event -> {
-                if (isMusicPlay = true) {
-                    mediaPlayer.stop();
-                    isMusicPlay = false;
-                }
-                try {
-                    nowPlaying = list.get(list.indexOf(nowPlaying) - 1);
+                    if (isMusicPlay = true) {
+                        mediaPlayer.stop();
+                        isMusicPlay = false;
+                    }
+                    nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
                     play(nowPlaying);
                     songName.setText(nowPlaying.getName());
-                } catch (ArrayIndexOutOfBoundsException e) {
+                } catch (IndexOutOfBoundsException e) {
                     return;
                 }
             });
 
+            mainScreen.setOnAction(event -> {
+                try {
+                    mediaPlayer.stop();
+                    mainScreen.getScene().getWindow().hide();
+                    FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("mainScreen.fxml"));
+                    Parent root = loader.load();
+                    MainController controller = loader.getController();
+                    Stage stage1 = new Stage();
+                    stage1.setScene(new Scene(root));
+                    stage1.setTitle("Music Player | polinadelaet");
+                    stage1.setResizable(false);
+                    stage1.getIcons().add(new Image("picture.jpg"));
+                    stage1.show();
+                } catch (IOException e) {return;}
+            });
 
+            previousButton.setOnAction(event -> {
+                try {
+                    if (isMusicPlay = true) {
+                        mediaPlayer.stop();
+                        isMusicPlay = false;
+                    }
+                    nowPlaying = list.get(list.indexOf(nowPlaying) - 1);
+                    play(nowPlaying);
+                    songName.setText(nowPlaying.getName());
+                } catch (IndexOutOfBoundsException e) {
+                    return;
+                }
+            });
         } catch (Exception e) {
-            e.printStackTrace();
+            return;
         }
     }
     public void setDirWithMusic(File dirWithMusic) {
         this.dirWithMusic = dirWithMusic;
         songList = audioWorker.loadAudioFiles(dirWithMusic);
-
         list = FXCollections.observableArrayList(songList);
         titleSongTable.setItems(list);
         titleColumn.setCellValueFactory(cellData -> cellData.getValue().getStringPropertyName());
-
         media = new Media(list.get(index).getSongFile().toURI().toString());
         mediaPlayer = new MediaPlayer(media);
     }
 
     private void play(Song song){
+        Duration time = new Duration(mediaPlayer.getTotalDuration().toMillis());
+        double secondsEndTime = time.toSeconds() % 60;
+        double minutesEndTime =  time.toSeconds() / 60;
+        timeLabel.setText(String.format("%.1s", minutesEndTime) + ":" + String.format("%.2s", secondsEndTime));
 
         if (isMusicPlay = true) {
             mediaPlayer.stop();
             isMusicPlay = false;
         }
-
         media = new Media(song.getSongFile().toURI().toString());
         mediaPlayer = new MediaPlayer(media);
-
         mediaPlayer.play();
         mediaPlayer.setVolume(0.3);
         isMusicPlay = true;
@@ -236,32 +213,17 @@ public class Controller {
             @Override
             public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
                 mediaSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
-
-                Duration time = new Duration(mediaPlayer.getTotalDuration().toMillis());
                 Duration timeNow = new Duration(newValue.toMillis());
-
-                System.out.println(mediaSlider.getValue());
-                System.out.println("_______" + timeNow);
-
-                double secondsEndTime = time.toSeconds() % 60;
-                double minutesEndTime =  time.toSeconds() / 60;
-                timeLabel.setText(String.format("%.1s", minutesEndTime) + ":" + String.format("%.2s", secondsEndTime));
                 double secondsTimeNow = timeNow.toSeconds() % 60;
                 double minutesTimeNow =  timeNow.toSeconds() / 60;
 
                 if ((timeNow.toSeconds() % 60) < 10) {
-
                     String s = "0" + (timeNow.toSeconds() % 60);
                     timeNowLabel.setText(String.format("%.1s", minutesTimeNow) + ":" + String.format("%.2s", s));
-                } else {
-
                     mediaSlider.setValue(newValue.toSeconds());
-
-                    System.out.println("sec = " + secondsEndTime);
-                    System.out.println("min = " + minutesEndTime);
-
+                } else {
+                    mediaSlider.setValue(newValue.toSeconds());
                     timeNowLabel.setText(String.format("%.1s", minutesTimeNow) + ":" + String.format("%.2s", secondsTimeNow));
-                    timeLabel.setText(String.format("%.1s", minutesEndTime) + ":" + String.format("%.2s", secondsEndTime));
                 }
             }
         });

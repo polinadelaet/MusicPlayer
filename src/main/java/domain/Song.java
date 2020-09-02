@@ -18,7 +18,6 @@ public final class Song {
     }
 
     public StringProperty getStringPropertyName() {
-        System.out.println(new SimpleStringProperty(name));
         return new SimpleStringProperty(name);
     }
 
