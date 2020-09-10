@@ -1,6 +1,6 @@
 package AudioWorker;
 
-import domain.Song;
+import model.Song;
 
 import java.io.File;
 import java.util.*;

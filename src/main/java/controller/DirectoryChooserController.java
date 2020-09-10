@@ -10,8 +10,9 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 
-public class MainController {
+public class DirectoryChooserController {
     private File dirWithMusic;
 
     @FXML
@@ -24,10 +25,16 @@ public class MainController {
             Stage stage = (Stage) nameDirWithAudio.getScene().getWindow();
             dirWithMusic = directoryChooser.showDialog(stage);
             nameDirWithAudio.getScene().getWindow().hide();
+            FXMLLoader loader = new FXMLLoader(DirectoryChooserController.class
+                    .getResource("/screenWithMusic.fxml"));
+            Parent root = null;
             try {
-                FXMLLoader loader = new FXMLLoader(MainController.class.getResource("/screenWithMusic.fxml"));
-                Parent root = loader.load();
-                Controller controller = loader.getController();
+                root = loader.load();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(0);
+            }
+                ScreenWithMusicController controller = loader.getController();
                 controller.setDirWithMusic(dirWithMusic);
                 Stage stage1 = new Stage();
                 stage1.setScene(new Scene(root, 1000, 700));
@@ -38,9 +45,6 @@ public class MainController {
                 stage1.setTitle("Music Player | polinadelaet");
                 stage1.getIcons().add(new Image("picture.jpg"));
                 stage1.show();
-            } catch (Exception e) {
-                System.out.println("oops");
-            }
         });
     }
 }
