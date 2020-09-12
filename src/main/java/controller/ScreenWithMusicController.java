@@ -94,53 +94,15 @@ public class ScreenWithMusicController {
 
             mediaSlider.setOnMousePressed(event -> mediaPlayer.seek(Duration.seconds(mediaSlider.getValue())));
 
-            titleSongTable.setOnMouseClicked(event -> {
-                timeLabel.setText(String.format("%.1s", 00) + ":" + String.format("%.2s", 00));
-                flag = false;
-                mediaSlider.setValue(0);
-                nowPlaying = titleSongTable.getSelectionModel().getSelectedItem();
-                songName.setText(nowPlaying.getName());
-                play(nowPlaying);
-            });
+            titleSongTable.setOnMouseClicked(event -> playSongFromList());
 
-            playPauseButton.setOnAction(event -> {
-                if (isMusicPlay) {
-                    pause();
-                    return;
-                }
-                if (flag) {return;}
-                mediaPlayer.play();
-                isMusicPlay = true;
-                playPauseButton.setGraphic(pause);
-            });
+            playPauseButton.setOnAction(event -> playOrPauseButtonAction());
 
-            nextButton.setOnAction(event -> {
-                    if (isMusicPlay = true) {
-                        mediaPlayer.stop();
-                        isMusicPlay = false;
-                    }
-                    try {
-                        nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
-                    } catch (IndexOutOfBoundsException e) {
-                        return;
-                    }
-                    play(nowPlaying);
-            });
+            nextButton.setOnAction(event -> playNextSong());
 
             mainScreen.setOnAction((event) -> chooseAnotherFolder());
 
-            previousButton.setOnAction(event -> {
-                if (isMusicPlay = true) {
-                    mediaPlayer.stop();
-                    isMusicPlay = false;
-                }
-                try {
-                    nowPlaying = list.get(list.indexOf(nowPlaying) - 1);
-                } catch (IndexOutOfBoundsException e) {
-                    return;
-                }
-                play(nowPlaying);
-            });
+            previousButton.setOnAction(event -> playPreviousSong());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -160,6 +122,7 @@ public class ScreenWithMusicController {
         isMusicPlay = false;
         playPauseButton.setGraphic(play);
     }
+
     private void play(Song song) {
         if (isMusicPlay = true) {
             mediaPlayer.stop();
@@ -200,6 +163,52 @@ public class ScreenWithMusicController {
             play(nowPlaying);
             songName.setText(nowPlaying.getName());
         });
+    }
+
+    private void playSongFromList() {
+        timeLabel.setText(String.format("%.1s", 00) + ":" + String.format("%.2s", 00));
+        flag = false;
+        mediaSlider.setValue(0);
+        nowPlaying = titleSongTable.getSelectionModel().getSelectedItem();
+        songName.setText(nowPlaying.getName());
+        play(nowPlaying);
+    }
+
+    private void playOrPauseButtonAction() {
+        if (isMusicPlay) {
+            pause();
+            return;
+        }
+        if (flag) {return;}
+        mediaPlayer.play();
+        isMusicPlay = true;
+        playPauseButton.setGraphic(pause);
+    }
+
+    private void playNextSong() {
+        if (isMusicPlay = true) {
+            mediaPlayer.stop();
+            isMusicPlay = false;
+        }
+        try {
+            nowPlaying = list.get(list.indexOf(nowPlaying) + 1);
+        } catch (IndexOutOfBoundsException e) {
+            return;
+        }
+        play(nowPlaying);
+    }
+
+    private void playPreviousSong() {
+        if (isMusicPlay = true) {
+            mediaPlayer.stop();
+            isMusicPlay = false;
+        }
+        try {
+            nowPlaying = list.get(list.indexOf(nowPlaying) - 1);
+        } catch (IndexOutOfBoundsException e) {
+            return;
+        }
+        play(nowPlaying);
     }
 
     private void chooseAnotherFolder() {
